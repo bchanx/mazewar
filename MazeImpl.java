@@ -278,9 +278,13 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
 			// If it is a Client, update scores and wait for server reply for next step
 			if (contents instanceof Client) {
 				// If it is a GUIClient (myself), alert the server
-				if(contents instanceof GUIClient) {
+				if (contents instanceof GUIClient) {
 					GUIClient c = (GUIClient) contents;
 					c.reportDeath(client.getName());
+				// If it's robot, check if myself and alert server
+				} else if (contents instanceof RobotClient) {
+					RobotClient r = (RobotClient) contents;
+					r.reportDeath(r.getName(), client.getName());
 				}
                                 return true; 
                         } else {
@@ -360,6 +364,7 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
         public synchronized DirectedPoint killClient(Client source, Client target) {
                 assert(source != null);
                 assert(target != null);
+		Mazewar.consolePrintLn(source.getName() + " just vaporized " + target.getName());
                 Object o = clientMap.remove(target);
                 assert(o instanceof Point);
                 Point point = (Point)o;
@@ -471,11 +476,15 @@ public class MazeImpl extends Maze implements Serializable, ClientListener, Runn
                 Object contents = newCell.getContents();
                 if(contents != null) {
 			// Clear projectile and wait for server reply for next step
-			if(contents instanceof Client) {
+			if (contents instanceof Client) {
 				// If it is a GUIClient (myself), alert the server
 				if (contents instanceof GUIClient) {
 					GUIClient c = (GUIClient) contents;
 					c.reportDeath(prj.getOwner().getName());
+				// If it's robot, check if myself and alert server
+				} else if (contents instanceof RobotClient) {
+					RobotClient r = (RobotClient) contents;
+					r.reportDeath(r.getName(), prj.getOwner().getName());
 				}
 				cell.setContents(null);
 				deadPrj.add(prj);

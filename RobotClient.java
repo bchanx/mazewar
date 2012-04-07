@@ -16,7 +16,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA.
 */
- 
+
+import java.util.*;
 import java.util.Random;
 import java.util.Vector;
 import java.lang.Runnable;
@@ -29,6 +30,9 @@ import java.lang.Runnable;
  */
  
 public class RobotClient extends LocalClient implements Runnable {
+
+	private MazeServer server = null;
+	private MazeSignature sig = null;
 
         /**
          * Random number generator so that the robot can be
@@ -51,13 +55,24 @@ public class RobotClient extends LocalClient implements Runnable {
          * Create a computer controlled {@link LocalClient}.
          * @param name The name of this {@link RobotClient}.
          */
-        public RobotClient(String name) {
-                super(name);
-                assert(name != null);
+        public RobotClient(MazeServer server) {
+                super(server.get_sig().name);
+                assert(server.get_sig().name != null);
+
+		this.server = server;
+		this.sig = new MazeSignature(server.get_sig());
+
                 // Create our thread
                 thread = new Thread(this);
         }
    
+	public RobotClient(String name) {
+		super(name);
+		assert(name != null);
+
+		thread = null;
+	}
+
         /** 
          * Override the abstract {@link Client}'s registerMaze method so that we know when to start 
          * control thread.
@@ -68,8 +83,10 @@ public class RobotClient extends LocalClient implements Runnable {
                 super.registerMaze(maze);
 
                 // Get the control thread going.
-                active = true;
-                thread.start();
+		if (this.server != null) {
+	                active = true;
+        	        thread.start();
+		}
         }
         
         /** 
@@ -77,14 +94,16 @@ public class RobotClient extends LocalClient implements Runnable {
          * control thread. 
          */
         public synchronized void unregisterMaze() {
-                // Signal the control thread to stop
-                active = false; 
-                // Wait half a second for the thread to complete.
-                try {
-                        thread.join(500);
-                } catch(Exception e) {
-                        // Shouldn't happen
-                }
+		if (this.server != null) {
+	                // Signal the control thread to stop
+        	        active = false; 
+                	// Wait half a second for the thread to complete.
+	                try {
+        	                thread.join(500);
+                	} catch(Exception e) {
+                        	// Shouldn't happen
+	                }
+		}
                 super.unregisterMaze();
         }
     
@@ -97,29 +116,63 @@ public class RobotClient extends LocalClient implements Runnable {
 
                 // Loop while we are active
                 while(active) {
-                        // Try to move forward
-                        if(!forward()) {
-                                // If we fail...
-                                if(randomGen.nextInt(3) == 1) {
-                                        // turn left!
-                                        turnLeft();
-                                } else {
-                                        // or perhaps turn right!
-                                        turnRight();
-                                }
-                        }
+			MazePacket m = new MazePacket(sig);
+			m.type = MazePacket.MAZE_REQ;
 
-                        // Shoot at things once and a while.
-                        if(randomGen.nextInt(10) == 1) {
-                                fire();
+			int x = randomGen.nextInt(10);
+			if (x < 2) {
+                        	// Try to move forward
+				m.ce = ClientEvent.moveForward;
+				writeToServer(m);
+			} else if (x < 3) {
+				// turn left!
+				m.ce = ClientEvent.turnLeft;
+				writeToServer(m);
+			} else if (x < 4) {
+				// or perhaps turn right!
+				m.ce = ClientEvent.turnRight;
+				writeToServer(m);
+			} else if (x < 7) {
+ 	                       // Shoot at things once and a while.
+				if (!server.maze_getClientFired(this)) {
+					m.ce = ClientEvent.fire;
+					writeToServer(m);
+				}
                         }
                         
                         // Sleep so the humans can possibly compete.
                         try {
-                                thread.sleep(200);
+                                thread.sleep(1000);
                         } catch(Exception e) {
                                 // Shouldn't happen.
                         }
                 }
         }
+
+	/**
+	* Write MazePacket to server and broadcast.
+	*/
+	public synchronized void writeToServer (MazePacket m) {
+		m.seq_no = server.get_next_seq_no();
+		server.queue_add(m);
+		server.client_broadcast(m);
+		m.type = MazePacket.MAZE_DATA;
+		server.payload_add(m.key(), m);
+	}
+
+	/**
+	* Send death signal to server.
+	*/
+	public void reportDeath (String robot, String culprit) {
+		if (server != null) {
+			MazePacket m = new MazePacket(sig);
+			m.type = MazePacket.MAZE_REQ;
+			m.ce = ClientEvent.death;
+			m.remote_clients = new ArrayList<MazeSignature>();
+			m.remote_clients.add(new MazeSignature(culprit));
+			writeToServer(m);
+		}
+	}
+
+
 }
