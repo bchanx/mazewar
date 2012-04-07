@@ -17,6 +17,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA.
 */
 
+import java.io.*;
+import java.util.*;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
 
@@ -29,37 +31,62 @@ import java.awt.event.KeyEvent;
 
 public class GUIClient extends LocalClient implements KeyListener {
 
+        private MazeSignature sig;
+	private Maze maze;
+        private ObjectOutputStream out = null;
         /**
          * Create a GUI controlled {@link LocalClient}.  
          */
         public GUIClient(String name) {
                 super(name);
         }
-        
+
+        public GUIClient(String name, Maze maze, ObjectOutputStream out) {
+                super(name);
+                sig = new MazeSignature(name);
+		this.maze = maze;
+                this.out = out;
+        }
+
         /**
          * Handle a key press.
          * @param e The {@link KeyEvent} that occurred.
          */
         public void keyPressed(KeyEvent e) {
-                // If the user pressed Q, invoke the cleanup code and quit. 
-                if((e.getKeyChar() == 'q') || (e.getKeyChar() == 'Q')) {
-                        Mazewar.quit();
-                // Up-arrow moves forward.
-                } else if(e.getKeyCode() == KeyEvent.VK_UP) {
-                        forward();
-                // Down-arrow moves backward.
-                } else if(e.getKeyCode() == KeyEvent.VK_DOWN) {
-                        backup();
-                // Left-arrow turns left.
-                } else if(e.getKeyCode() == KeyEvent.VK_LEFT) {
-                        turnLeft();
-                // Right-arrow turns right.
-                } else if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                        turnRight();
-                // Spacebar fires.
-                } else if(e.getKeyCode() == KeyEvent.VK_SPACE) {
-                        fire();
-                }
+                MazePacket m = new MazePacket();
+                m.sig = sig;
+		// If the user pressed Q, invoke the cleanup code and quit. 
+		if((e.getKeyChar() == 'q') || (e.getKeyChar() == 'Q')) {
+			m.type = MazePacket.MAZE_DISCONNECT;
+			writeToServer(m);
+		// Up-arrow moves forward.
+		} else if(e.getKeyCode() == KeyEvent.VK_UP) {
+			m.type = MazePacket.MAZE_DATA;
+			m.ce = ClientEvent.moveForward;
+			writeToServer(m);
+		// Down-arrow moves backward.
+		} else if(e.getKeyCode() == KeyEvent.VK_DOWN) {
+			m.type = MazePacket.MAZE_DATA;
+			m.ce = ClientEvent.moveBackward;
+			writeToServer(m);
+		// Left-arrow turns left.
+		} else if(e.getKeyCode() == KeyEvent.VK_LEFT) {
+			m.type = MazePacket.MAZE_DATA;
+			m.ce = ClientEvent.turnLeft;
+			writeToServer(m);
+		// Right-arrow turns right.
+		} else if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
+			m.type = MazePacket.MAZE_DATA;
+			m.ce = ClientEvent.turnRight;
+			writeToServer(m);
+		// Spacebar fires.
+		} else if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+			if (!maze.getClientFired(this)) {
+				m.type = MazePacket.MAZE_DATA;
+				m.ce = ClientEvent.fire;
+				writeToServer(m);
+			}
+		}
         }
         
         /**
@@ -75,5 +102,29 @@ public class GUIClient extends LocalClient implements KeyListener {
          */
         public void keyTyped(KeyEvent e) {
         }
+
+	/**
+	 * Write MazePacket to server.
+	 */
+	public synchronized void writeToServer (MazePacket m) {
+		try {
+			out.writeObject(m);
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+	}
+
+	/**
+	 * Send death signal to server.
+	 */
+	public void reportDeath (String culprit) {
+		MazePacket m = new MazePacket();
+		m.sig = sig;
+		m.type = MazePacket.MAZE_DATA;
+		m.ce = ClientEvent.death;
+		m.remote_clients = new ArrayList<String>();
+		m.remote_clients.add(culprit);
+		writeToServer(m);
+	}
 
 }

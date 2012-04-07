@@ -59,16 +59,44 @@ public abstract class Maze {
     public abstract void addClient(Client client);
 
     /** 
+     * Add a {@link Client} at chosen location in the {@link Maze}. 
+     * @param client {@link Client} to be added to the {@link Maze}.
+     * @param dp {@link DirectedPoint} point to be added to the {@link Maze}.
+     */
+    public abstract void addClient(Client client, DirectedPoint dp);
+
+    /** 
      * Create a new {@link Projectile} from the specified {@link Client}
      * @param client {@link Client} that is firing.
      * @return <code>false</code> on failure, <code>true</code> on success. */
     public abstract boolean clientFire(Client client);
     
+    /**
+     * Check whether client currently has a projectile in play.
+     * @param client {@link Client} that is being checked.
+     * @return <code>false</code> if not, <code>true</code> otherwise. */
+    public abstract boolean getClientFired(Client client);
+
     /** 
      * Remove the specified {@link Client} from the {@link Maze} 
      * @param client {@link Client} to be removed.
      */
     public abstract void removeClient(Client client);
+
+    /**
+     * Server handler for the death of a {@link Client}.
+     * @param source The {@link Client} that fired the projectile.
+     * @param target The {@link Client} that was killed.
+     */
+    public abstract DirectedPoint killClient(Client source, Client target);
+
+    /**
+     * Client handler for the death of a {@link Client} with respawn point dp.
+     * @param source The {@link Client} that fired the projectile.
+     * @param target The {@link Client} that was killed.
+     * @param dp The {@link DirectedPoint} that marks the respawn position.
+     */
+    public abstract void killClient(Client souce, Client target, DirectedPoint dp);
 
     /** 
      * Find out where a specified {@link Client} is located 

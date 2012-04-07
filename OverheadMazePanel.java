@@ -196,11 +196,11 @@ public class OverheadMazePanel extends JPanel implements MazeListener {
                                                         Direction orient = c.getOrientation();
                                                         g2.translate(xoffset, yoffset);
                                                         double rotation = 0.0; 
-                                                        if(orient == Direction.South) {
+                                                        if(orient.equals(Direction.South)) {
                                                                 rotation=-java.lang.Math.PI/2.0;
-                                                        } else if (orient == Direction.North) {
+                                                        } else if (orient.equals(Direction.North)) {
                                                                 rotation=java.lang.Math.PI/2.0;
-                                                        } else if (orient == Direction.West) {
+                                                        } else if (orient.equals(Direction.West)) {
                                                                 rotation=java.lang.Math.PI;
                                                         }
                                                         g2.rotate(rotation);

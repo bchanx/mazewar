@@ -73,6 +73,10 @@ public class ScoreTableModel implements TableModel, MazeListener {
                         return score;
                 }
 
+		public void setScore(int mod) {
+			score = mod;
+		}
+
                 public void adjustScore(int mod) {
                         score = score + mod;
                 }
@@ -184,6 +188,22 @@ public class ScoreTableModel implements TableModel, MazeListener {
                 /* Shouldn't be setting things this way */
                 throw new Error();
         }
+
+	public int getScore(Client client) {
+		assert(client != null);
+		Object o = clientMap.get(client);
+		assert (o instanceof ScoreWrapper);
+		ScoreWrapper s = (ScoreWrapper)o;
+		return s.getScore();
+	}
+
+	public void setScore(Client client, int score) {
+		assert(client != null);
+		Object o = clientMap.get(client);
+		assert (o instanceof ScoreWrapper);
+		ScoreWrapper s = (ScoreWrapper)o;
+		s.setScore(score);
+	}
 
         public void mazeUpdate() {
 

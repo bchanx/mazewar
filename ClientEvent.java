@@ -23,28 +23,31 @@ USA.
  * @version $Id: ClientEvent.java 359 2004-01-31 20:14:31Z geoffw $
  */
 
-public class ClientEvent {
+import java.io.Serializable;
+
+public class ClientEvent implements Serializable {
         /* Internals ******************************************************/
         
         /**
          * Internal representations of events.
          */
-        private static final int MOVE_FORWARD = 0;
-        private static final int MOVE_BACKWARD = 1;
-        private static final int TURN_LEFT = 2;
-        private static final int TURN_RIGHT = 3;
-        private static final int FIRE = 4;
+        public static final int MOVE_FORWARD = 0;
+        public static final int MOVE_BACKWARD = 1;
+        public static final int TURN_LEFT = 2;
+        public static final int TURN_RIGHT = 3;
+        public static final int FIRE = 4;
+	public static final int DEATH = 5;
         
         /**
          * Default to 0, to be invalid.
          */
-        private final int event;
+        public final int event;
         
         /**
          * Create a new {@link ClientEvent} from an internal representation.
          */
         private ClientEvent(int event) {
-                assert((event >= 0) && (event <= 4));
+                assert((event >= 0) && (event <= 5));
                 this.event = event;
         }
 
@@ -75,5 +78,9 @@ public class ClientEvent {
          */
         public static final ClientEvent fire = new ClientEvent(FIRE);
         
+	/**
+	 * Generated when a {@link Client} dies.
+	 */
+	public static final ClientEvent death = new ClientEvent(DEATH);
         
 }

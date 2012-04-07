@@ -1,1 +1,13 @@
 Distributed implementation of mazewar with Ricart-Agrawala.
+
+[Running the server]
+./server.sh [port] (ex. ./server.sh 8888)
+
+[Running a client]
+./client.sh [username] [server hostname] [server port] (ex. ./client.sh Joe localhost 8888)
+
+[Notes]
+- Usernames must be unique, or else server rejects the registration request (this avoids multiple "Joe"'s in the game to decrease confusion)
+- Server has a soft limit of 4 concurrent connections, but can be raised in the source code to any reasonable number beyond (MazewarServer.java)
+- Server supports dynamic quitting and joining (user can join mid game and leave at any point), however scores for that individual client will be reset each time.
+
